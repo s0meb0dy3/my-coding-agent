@@ -7,14 +7,12 @@ no Textual/Rich, no local config paths. mini_coding builds the app on top.
 from .messages import (
     AssistantMessage,
     Message,
+    TextContent,
     ToolCall,
     ToolResultMessage,
     UserMessage,
-    message_from_dict,
-    message_from_json,
+    WireModel,
     message_text,
-    message_to_dict,
-    message_to_json,
 )
 from .tools import (
     AgentTool,
@@ -26,22 +24,22 @@ from .tools import (
     validate_tool_arguments,
     wrap_tool,
 )
+from .types import JSONValue
 
 __all__ = [
     "AgentTool",
     "AssistantMessage",
+    "JSONValue",
     "JsonSchema",
     "Message",
+    "TextContent",
     "ToolCall",
     "ToolExecutor",
     "ToolResultMessage",
     "UserMessage",
+    "WireModel",
     "make_executor",
-    "message_from_dict",
-    "message_from_json",
     "message_text",
-    "message_to_dict",
-    "message_to_json",
     "parse_tool_arguments",
     "tool_schema",
     "validate_tool_arguments",

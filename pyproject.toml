@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "A from-scratch mini coding agent, mirroring Tau's three-layer split."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic>=2.11",
+]
 
 [dependency-groups]
 dev = [

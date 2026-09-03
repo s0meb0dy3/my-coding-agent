@@ -1,107 +1,139 @@
 """Core message types shared by all layers.
 
 Module 1 of the learning guide: the provider-neutral data structures every
-layer speaks. Start minimal — dataclasses and JSON — before growing into
-Pydantic block-based models like Tau's.
+layer speaks, modeled the way Tau models them — Pydantic, block-based content,
+JSON aliases on the wire — but cut down to what a starter loop needs.
 
-Layering rule: nothing here decides *what the agent should do next*; these
-types only describe what a conversation contains.
+Keep these conventions (they match Tau's src/tau_agent/messages.py):
+- content is a list of *blocks*, never a raw string; a tool call is just one
+  kind of block (type="toolCall"). Text, thinking, images, and tool calls all
+  live in that one ordered list.
+- every message serializes to camelCase on the wire and is tagged by `role`;
+  `Message` is a discriminated union on that role field.
+
+What we deliberately omit for now: thinking/image blocks, usage accounting,
+diagnostics, model metadata, and non-core message roles (bashExecution,
+custom, branchSummary, compactionSummary). They come back when a module
+needs them.
 """
 
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass, field
-from typing import Any, ClassVar
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from mini_agent.types import JSONValue
 
 
-@dataclass(frozen=True, slots=True)
-class ToolCall:
-    """A request from the assistant to run one tool."""
+def _to_camel(name: str) -> str:
+    parts = name.split("_")
+    return parts[0] + "".join(part.title() for part in parts[1:])
 
+
+class WireModel(BaseModel):
+    """Strict model with Python field names and JSON aliases on the wire."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_by_name=True,
+        validate_by_alias=True,
+        serialize_by_alias=True,
+        alias_generator=_to_camel,
+    )
+
+
+class TextContent(WireModel):
+    """A plain-text content block."""
+
+    type: Literal["text"] = "text"
+    text: str
+
+
+class ToolCall(WireModel):
+    """A tool-use request block the assistant emits."""
+
+    type: Literal["toolCall"] = "toolCall"
     id: str
     name: str
-    arguments: dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, JSONValue] = Field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
-class UserMessage:
-    """A user turn: plain text content for now."""
-
-    role: ClassVar[str] = "user"
-    content: str
+class UserMessage(WireModel):
+    role: Literal["user"] = "user"
+    content: str | list[TextContent]
 
     @property
     def text(self) -> str:
-        return self.content
+        """The visible text of this message."""
+        if isinstance(self.content, str):
+            return self.content
+        return "".join(block.text for block in self.content)
 
 
-@dataclass(frozen=True, slots=True)
-class AssistantMessage:
-    """An assistant turn: text plus any tool calls it wants to make."""
+class AssistantMessage(WireModel):
+    """An assistant turn: an ordered list of text and tool-call blocks."""
 
-    role: ClassVar[str] = "assistant"
-    content: str = ""
-    tool_calls: tuple[ToolCall, ...] = ()
+    role: Literal["assistant"] = "assistant"
+    content: list[TextContent | ToolCall] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_string_content(cls, value: object) -> object:
+        """Accept a plain string only as a construction convenience.
+
+        The stored model and wire protocol are always block based. This keeps
+        test construction terse without creating a second representation.
+        """
+        if isinstance(value, dict):
+            data = dict(value)
+            content = data.get("content")
+            if isinstance(content, str):
+                data["content"] = [TextContent(text=content)] if content else []
+            return data
+        return value
 
     @property
     def text(self) -> str:
-        return self.content
+        """The visible text of this message (tool-call blocks carry no text)."""
+        return "".join(block.text for block in self.content if isinstance(block, TextContent))
+
+    @property
+    def tool_calls(self) -> tuple[ToolCall, ...]:
+        return tuple(block for block in self.content if isinstance(block, ToolCall))
 
 
-@dataclass(frozen=True, slots=True)
-class ToolResultMessage:
+class ToolResultMessage(WireModel):
     """The result of running one tool call, keyed back to it by id."""
 
-    role: ClassVar[str] = "toolResult"
+    role: Literal["toolResult"] = "toolResult"
     tool_call_id: str
     tool_name: str
-    content: str
+    content: list[TextContent] = Field(default_factory=list)
     is_error: bool = False
-    details: dict[str, Any] | None = None
+    details: JSONValue = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_string_content(cls, value: object) -> object:
+        """Accept a plain string only as a construction convenience."""
+        if isinstance(value, dict):
+            data = dict(value)
+            content = data.get("content")
+            if isinstance(content, str):
+                data["content"] = [TextContent(text=content)] if content else []
+            return data
+        return value
 
     @property
     def text(self) -> str:
-        return self.content
+        return "".join(block.text for block in self.content)
 
 
-# Every layer's message is one of these three (a union tagged by role).
-type Message = UserMessage | AssistantMessage | ToolResultMessage
-
-
-def message_to_dict(message: Message) -> dict[str, Any]:
-    """Convert a message to a plain dict tagged with its role."""
-    data = asdict(message)
-    data["role"] = message.role
-    return data
-
-
-def message_from_dict(data: dict[str, Any]) -> Message:
-    """Build a message from a role-tagged dict; unknown roles fail loudly."""
-    data = dict(data)
-    role = data.pop("role", None)
-    if role == "user":
-        return UserMessage(**data)
-    if role == "assistant":
-        calls = data.pop("tool_calls", ()) or ()
-        tool_calls = tuple(ToolCall(**call) for call in calls)
-        return AssistantMessage(**data, tool_calls=tool_calls)
-    if role == "toolResult":
-        return ToolResultMessage(**data)
-    raise ValueError(f"unknown message role: {role!r}")
-
-
-def message_to_json(message: Message) -> str:
-    """Serialize a message to one JSON line, safe for an append-only transcript."""
-    return json.dumps(message_to_dict(message), ensure_ascii=False)
-
-
-def message_from_json(line: str) -> Message:
-    """Parse one JSON line back into a message; raises on corrupt input."""
-    data = json.loads(line)
-    if not isinstance(data, dict):
-        raise ValueError("message JSON must be an object")
-    return message_from_dict(data)
+type Message = Annotated[
+    UserMessage | AssistantMessage | ToolResultMessage,
+    Field(discriminator="role"),
+]
 
 
 def message_text(message: Message) -> str:
@@ -112,12 +144,10 @@ def message_text(message: Message) -> str:
 __all__ = [
     "AssistantMessage",
     "Message",
+    "TextContent",
     "ToolCall",
     "ToolResultMessage",
     "UserMessage",
-    "message_from_dict",
-    "message_from_json",
+    "WireModel",
     "message_text",
-    "message_to_dict",
-    "message_to_json",
 ]
