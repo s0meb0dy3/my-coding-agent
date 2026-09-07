@@ -14,11 +14,11 @@ from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-from mini_agent.events import AgentEndEvent, AgentEvent
-from mini_agent.loop import AgentLoop
-from mini_agent.messages import AgentMessage, UserMessage
-from mini_agent.tools import AgentTool
-from mini_ai.provider import ModelProvider
+from nexa_agent.events import AgentEndEvent, AgentEvent
+from nexa_agent.loop import AgentLoop
+from nexa_agent.messages import AgentMessage, UserMessage
+from nexa_agent.tools import AgentTool
+from nexa_ai.provider import ModelProvider
 
 # ── 事件监听器协议 ────────────────────────────────────────────────────────────
 
@@ -270,19 +270,19 @@ __all__ = ["AgentHarness", "AgentHarnessConfig", "EventListener"]
 if __name__ == "__main__":
     """用真实 DeepSeek API 快速验证 Harness 的核心功能。
 
-    运行方式：uv run python src/mini_agent/harness.py
+    运行方式：uv run python src/nexa_agent/harness.py
     """
 
     import asyncio
     import os
 
-    from mini_agent.events import (
+    from nexa_agent.events import (
         AgentEndEvent,
         MessageEndEvent,
         ToolExecutionEndEvent,
         TurnEndEvent,
     )
-    from mini_ai.openai_compatible import OpenAICompatibleProvider
+    from nexa_ai.openai_compatible import OpenAICompatibleProvider
 
     # 一个简单的监听器：打印关键事件
     class PrintListener:

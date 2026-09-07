@@ -4,27 +4,27 @@ from __future__ import annotations
 
 import pytest
 
-from mini_agent.events import (
+from nexa_agent.events import (
     AgentEndEvent,
     AgentStartEvent,
     ToolExecutionEndEvent,
     ToolExecutionStartEvent,
     TurnStartEvent,
 )
-from mini_agent.loop import AgentLoop
-from mini_agent.messages import (
+from nexa_agent.loop import AgentLoop
+from nexa_agent.messages import (
     AssistantMessage,
     TextContent,
     ToolCall,
     UserMessage,
 )
-from mini_agent.tools import AgentTool, AgentToolResult
-from mini_ai.events import (
+from nexa_agent.tools import AgentTool, AgentToolResult
+from nexa_ai.events import (
     ProviderErrorEvent,
     ProviderResponseEndEvent,
     ProviderResponseStartEvent,
 )
-from mini_ai.fake import FakeProvider
+from nexa_ai.fake import FakeProvider
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────────
 

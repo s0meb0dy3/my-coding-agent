@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from mini_coding.tools import create_coding_tools
+from nexa_coding.tools import create_coding_tools
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────────
 

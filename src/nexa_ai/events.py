@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from mini_agent.messages import AssistantMessage, ToolCall, WireModel
+from nexa_agent.messages import AssistantMessage, ToolCall, WireModel
 
 
 class ProviderResponseStartEvent(WireModel):

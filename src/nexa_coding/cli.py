@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 from typing import TextIO
 
-from mini_agent.events import AgentEndEvent, ToolExecutionEndEvent, ToolExecutionStartEvent
-from mini_agent.harness import AgentHarness, AgentHarnessConfig
-from mini_ai.openai_compatible import OpenAICompatibleProvider
-from mini_ai.provider import ModelProvider
-from mini_coding.tools import create_coding_tools
+from nexa_agent.events import AgentEndEvent, ToolExecutionEndEvent, ToolExecutionStartEvent
+from nexa_agent.harness import AgentHarness, AgentHarnessConfig
+from nexa_ai.openai_compatible import OpenAICompatibleProvider
+from nexa_ai.provider import ModelProvider
+from nexa_coding.tools import create_coding_tools
 
 DEFAULT_MODEL = "deepseek-chat"
 DEFAULT_BASE_URL = "https://api.deepseek.com"

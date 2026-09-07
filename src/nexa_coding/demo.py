@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import os
 
-from mini_agent.events import (
+from nexa_agent.events import (
     AgentEndEvent,
     AgentStartEvent,
     MessageStartEvent,
@@ -15,10 +15,10 @@ from mini_agent.events import (
     TurnEndEvent,
     TurnStartEvent,
 )
-from mini_agent.loop import AgentLoop
-from mini_agent.messages import AgentMessage, UserMessage
-from mini_agent.tools import AgentTool, AgentToolResult
-from mini_ai.openai_compatible import OpenAICompatibleProvider
+from nexa_agent.loop import AgentLoop
+from nexa_agent.messages import AgentMessage, UserMessage
+from nexa_agent.tools import AgentTool, AgentToolResult
+from nexa_ai.openai_compatible import OpenAICompatibleProvider
 
 # ── 工具定义 ──────────────────────────────────────────────────────────────────
 

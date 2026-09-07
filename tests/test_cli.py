@@ -7,10 +7,10 @@ from io import StringIO
 
 import pytest
 
-from mini_agent.messages import AssistantMessage, TextContent
-from mini_ai.events import ProviderErrorEvent, ProviderResponseEndEvent
-from mini_ai.fake import FakeProvider
-from mini_coding.cli import run_prompt
+from nexa_agent.messages import AssistantMessage, TextContent
+from nexa_ai.events import ProviderErrorEvent, ProviderResponseEndEvent
+from nexa_ai.fake import FakeProvider
+from nexa_coding.cli import run_prompt
 
 
 def _args(tmp_path) -> argparse.Namespace:

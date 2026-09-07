@@ -1,7 +1,7 @@
 [project]
-name = "my-coding-agent"
+name = "nexa"
 version = "0.1.0"
-description = "A from-scratch mini coding agent, mirroring Tau's three-layer split."
+description = "A from-scratch coding agent, mirroring Tau's three-layer split."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -18,14 +18,14 @@ dev = [
 ]
 
 [project.scripts]
-mini-coding-agent = "mini_coding.cli:main"
+nexa = "nexa_coding.cli:main"
 
 [build-system]
 requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mini_ai", "src/mini_agent", "src/mini_coding"]
+packages = ["src/nexa_ai", "src/nexa_agent", "src/nexa_coding"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

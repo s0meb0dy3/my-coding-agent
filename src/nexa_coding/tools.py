@@ -18,7 +18,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from mini_agent.tools import AgentTool, AgentToolResult
+from nexa_agent.tools import AgentTool, AgentToolResult
 
 # ── 常量 ──────────────────────────────────────────────────────────────────────
 

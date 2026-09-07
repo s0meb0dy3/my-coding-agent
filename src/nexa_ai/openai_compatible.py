@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 
 import httpx
 
-from mini_agent.messages import (
+from nexa_agent.messages import (
     AgentMessage,
     AssistantMessage,
     TextContent,
@@ -16,8 +16,8 @@ from mini_agent.messages import (
     ToolResultMessage,
     UserMessage,
 )
-from mini_agent.tools import AgentTool
-from mini_ai.events import (
+from nexa_agent.tools import AgentTool
+from nexa_ai.events import (
     ProviderErrorEvent,
     ProviderEvent,
     ProviderResponseEndEvent,

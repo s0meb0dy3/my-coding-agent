@@ -1,4 +1,4 @@
-"""Shared low-level types for my-coding-agent portable agent layer."""
+"""Shared low-level types for NEXA's portable agent layer."""
 
 from __future__ import annotations
 

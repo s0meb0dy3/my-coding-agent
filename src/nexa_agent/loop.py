@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
-from mini_agent.events import (
+from nexa_agent.events import (
     AgentEndEvent,
     AgentEvent,
     AgentStartEvent,
@@ -15,15 +15,15 @@ from mini_agent.events import (
     TurnEndEvent,
     TurnStartEvent,
 )
-from mini_agent.messages import (
+from nexa_agent.messages import (
     AgentMessage,
     AssistantMessage,
     TextContent,
     ToolCall,
     ToolResultMessage,
 )
-from mini_agent.tools import AgentTool, AgentToolResult
-from mini_ai.provider import ModelProvider
+from nexa_agent.tools import AgentTool, AgentToolResult
+from nexa_ai.provider import ModelProvider
 
 
 class AgentLoop:

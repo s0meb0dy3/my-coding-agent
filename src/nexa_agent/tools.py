@@ -15,10 +15,10 @@ from pydantic import Field, model_validator
 
 # TextContent 是文字块，ToolCall 是工具调用块，WireModel 是统一的消息基类。
 # ToolCall 也会在文件末尾重新导出，方便调用者从这里一起导入。
-from mini_agent.messages import TextContent, ToolCall, WireModel
+from nexa_agent.messages import TextContent, ToolCall, WireModel
 
 # JSONValue 表示任意合法的 JSON 值，例如字符串、数字、列表或字典。
-from mini_agent.types import JSONValue
+from nexa_agent.types import JSONValue
 
 
 class AgentToolResult(WireModel):
@@ -100,7 +100,7 @@ class AgentTool:
         return await self.execute_fn(tool_call_id, arguments)
 
 
-# 使用 from mini_agent.tools import * 时，只导出这些名称。
+# 使用 from nexa_agent.tools import * 时，只导出这些名称。
 __all__ = [
     "AgentTool",
     "AgentToolResult",

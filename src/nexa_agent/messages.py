@@ -9,7 +9,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # JSONValue 表示一个可以放进 JSON 的值，例如字符串、数字、列表或字典。
-from mini_agent.types import JSONValue
+from nexa_agent.types import JSONValue
 
 
 def _to_camel(name: str) -> str:

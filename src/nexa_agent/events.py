@@ -9,13 +9,13 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 # AgentMessage 表示用户、助手或工具结果消息。
-from mini_agent.messages import AgentMessage, ToolResultMessage, WireModel
+from nexa_agent.messages import AgentMessage, ToolResultMessage, WireModel
 
 # AgentToolResult 表示工具执行后产生的结果。
-from mini_agent.tools import AgentToolResult
+from nexa_agent.tools import AgentToolResult
 
 # JSONValue 表示任意合法的 JSON 值，例如字符串、数字、列表或字典。
-from mini_agent.types import JSONValue
+from nexa_agent.types import JSONValue
 
 # 可以把事件理解成 Agent 发出的“我现在进行到哪一步了”的通知。
 # 大致流程是：Agent 开始 -> 一轮对话开始 -> 消息/工具执行 -> 一轮结束 -> Agent 结束。

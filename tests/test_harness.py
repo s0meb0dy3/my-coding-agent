@@ -6,21 +6,21 @@ import asyncio
 
 import pytest
 
-from mini_agent.events import AgentEndEvent, AgentEvent, AgentStartEvent
-from mini_agent.harness import AgentHarness, AgentHarnessConfig
-from mini_agent.messages import (
+from nexa_agent.events import AgentEndEvent, AgentEvent, AgentStartEvent
+from nexa_agent.harness import AgentHarness, AgentHarnessConfig
+from nexa_agent.messages import (
     AssistantMessage,
     TextContent,
     ToolCall,
     ToolResultMessage,
     UserMessage,
 )
-from mini_agent.tools import AgentTool, AgentToolResult
-from mini_ai.events import (
+from nexa_agent.tools import AgentTool, AgentToolResult
+from nexa_ai.events import (
     ProviderResponseEndEvent,
     ProviderResponseStartEvent,
 )
-from mini_ai.fake import FakeProvider
+from nexa_ai.fake import FakeProvider
 
 # ── 辅助类和函数 ──────────────────────────────────────────────────────────────
 
