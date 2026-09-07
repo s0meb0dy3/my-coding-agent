@@ -1,0 +1,40 @@
+"""用于测试的确定性假 Provider。"""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator, Iterable
+
+from mini_agent.messages import AgentMessage
+from mini_agent.tools import AgentTool
+from mini_ai.events import ProviderEvent
+
+
+class FakeProvider:
+    """按调用顺序播放预先准备好的 ProviderEvent。"""
+
+    def __init__(self, streams: Iterable[Iterable[ProviderEvent]]) -> None:
+        # 每次调用消费一组事件，便于测试多轮模型交互。
+        self._streams = [list(stream) for stream in streams]
+        self.calls: list[tuple[str, str, list[AgentMessage], list[AgentTool]]] = []
+
+    def stream_response(
+        self,
+        *,
+        model: str,
+        system: str,
+        messages: list[AgentMessage],
+        tools: list[AgentTool],
+    ) -> AsyncIterator[ProviderEvent]:
+        """记录请求，并返回下一组预设事件。"""
+
+        self.calls.append((model, system, list(messages), list(tools)))
+        stream = self._streams.pop(0) if self._streams else []
+
+        async def iterator() -> AsyncIterator[ProviderEvent]:
+            for event in stream:
+                yield event
+
+        return iterator()
+
+
+__all__ = ["FakeProvider"]

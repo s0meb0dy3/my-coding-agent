@@ -1,10 +1,8 @@
-"""Shared value type aliases, mirroring tau_agent.types (cut to what we use)."""
+"""Shared low-level types for my-coding-agent portable agent layer."""
 
 from __future__ import annotations
 
-from typing import Any
-
-# JSON data as it crosses provider boundaries and tool schemas.
-JSONValue = Any
-
-__all__ = ["JSONValue"]
+# Pydantic needs PEP 695 named recursive aliases for JSON-like values.
+type JSONPrimitive = str | int | float | bool | None # One Json could be a str, int, float, bool, or None.
+type JSONValue = JSONPrimitive | list[JSONValue] | dict[str, JSONValue]
+type JSONObject = dict[str, JSONValue]
