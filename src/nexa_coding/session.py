@@ -16,6 +16,7 @@ from typing import Protocol
 from nexa_agent.events import AgentEvent
 from nexa_agent.harness import AgentHarness, AgentHarnessConfig
 from nexa_agent.messages import AgentMessage
+from nexa_agent.provider import ModelProvider
 from nexa_agent.session.entries import (
     Entry,
     LeafEntry,
@@ -25,7 +26,6 @@ from nexa_agent.session.entries import (
 )
 from nexa_agent.session.memory import SessionState
 from nexa_agent.session.storage import JsonlStorage
-from nexa_ai.provider import ModelProvider
 from nexa_coding.resources import NexaResourcePaths
 from nexa_coding.skills import Skill, expand_skill_command, load_skills
 from nexa_coding.system_prompt import BuildSystemPromptOptions, build_system_prompt

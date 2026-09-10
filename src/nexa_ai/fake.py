@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Iterable
 
 from nexa_agent.messages import AgentMessage
+from nexa_agent.provider_events import ProviderEvent
 from nexa_agent.tools import AgentTool
-from nexa_ai.events import ProviderEvent
 
 
 class FakeProvider:

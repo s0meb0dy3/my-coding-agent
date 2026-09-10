@@ -16,14 +16,14 @@ from nexa_agent.messages import (
     ToolResultMessage,
     UserMessage,
 )
-from nexa_agent.tools import AgentTool
-from nexa_ai.events import (
+from nexa_agent.provider_events import (
     ProviderErrorEvent,
     ProviderEvent,
     ProviderResponseEndEvent,
     ProviderResponseStartEvent,
     ProviderTextDeltaEvent,
 )
+from nexa_agent.tools import AgentTool
 
 
 class OpenAICompatibleProvider:

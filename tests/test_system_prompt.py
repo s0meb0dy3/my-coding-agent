@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 from nexa_agent.messages import AssistantMessage, TextContent
+from nexa_agent.provider_events import ProviderResponseEndEvent, ProviderResponseStartEvent
 from nexa_agent.session.entries import Entry
 from nexa_agent.tools import AgentTool, AgentToolResult
-from nexa_ai.events import ProviderResponseEndEvent, ProviderResponseStartEvent
 from nexa_ai.fake import FakeProvider
 from nexa_coding.session import CodingSession, CodingSessionConfig
 from nexa_coding.skills import Skill

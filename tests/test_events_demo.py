@@ -36,12 +36,12 @@ from nexa_agent.events import (
 from nexa_agent.harness import AgentHarness, AgentHarnessConfig
 from nexa_agent.loop import AgentLoop
 from nexa_agent.messages import AssistantMessage, TextContent, ToolCall, UserMessage
-from nexa_agent.tools import AgentTool, AgentToolResult
-from nexa_ai.events import (
+from nexa_agent.provider_events import (
     ProviderResponseEndEvent,
     ProviderResponseStartEvent,
     ProviderTextDeltaEvent,
 )
+from nexa_agent.tools import AgentTool, AgentToolResult
 from nexa_ai.fake import FakeProvider
 
 # ── 示例公共部分：准备一个假 Provider 和一个假工具 ─────────────────────────────
@@ -293,7 +293,7 @@ async def test_04_tool_call_events():
 async def test_05_two_event_systems():
     """项目里有两套事件，各管一段：
 
-    ProviderEvent（nexa_ai/events.py，5 种）—— 描述"模型正在说话"：
+    ProviderEvent（nexa_agent/provider_events.py，5 种）—— 描述"模型正在说话"：
         response_start / text_delta / tool_call / response_end / error
     AgentEvent（nexa_agent/events.py，9 种）—— 描述"agent 整体在干什么"
 

@@ -11,6 +11,7 @@ from nexa_agent.messages import (
     ToolResultMessage,
     UserMessage,
 )
+from nexa_agent.provider_events import ProviderResponseEndEvent, ProviderResponseStartEvent
 from nexa_agent.session.entries import (
     Entry,
     LeafEntry,
@@ -19,7 +20,6 @@ from nexa_agent.session.entries import (
     SessionInfoEntry,
 )
 from nexa_agent.session.storage import JsonlStorage
-from nexa_ai.events import ProviderResponseEndEvent, ProviderResponseStartEvent
 from nexa_ai.fake import FakeProvider
 from nexa_coding.session import CodingSession, CodingSessionConfig
 

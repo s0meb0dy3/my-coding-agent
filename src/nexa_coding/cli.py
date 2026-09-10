@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import TextIO
 
 from nexa_agent.harness import AgentHarness, AgentHarnessConfig
+from nexa_agent.provider import ModelProvider
 from nexa_ai.openai_compatible import OpenAICompatibleProvider
-from nexa_ai.provider import ModelProvider
 from nexa_coding.rendering import PrintOutputMode, create_event_renderer
 from nexa_coding.tools import create_coding_tools
 from nexa_coding.tui import NexaTuiApp

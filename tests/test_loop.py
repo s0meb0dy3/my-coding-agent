@@ -18,12 +18,12 @@ from nexa_agent.messages import (
     ToolCall,
     UserMessage,
 )
-from nexa_agent.tools import AgentTool, AgentToolResult
-from nexa_ai.events import (
+from nexa_agent.provider_events import (
     ProviderErrorEvent,
     ProviderResponseEndEvent,
     ProviderResponseStartEvent,
 )
+from nexa_agent.tools import AgentTool, AgentToolResult
 from nexa_ai.fake import FakeProvider
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────────

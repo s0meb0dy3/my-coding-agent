@@ -8,7 +8,7 @@ from io import StringIO
 import pytest
 
 from nexa_agent.messages import AssistantMessage, TextContent
-from nexa_ai.events import ProviderErrorEvent, ProviderResponseEndEvent
+from nexa_agent.provider_events import ProviderErrorEvent, ProviderResponseEndEvent
 from nexa_ai.fake import FakeProvider
 from nexa_coding.cli import run_prompt
 from nexa_coding.rendering import PrintOutputMode
