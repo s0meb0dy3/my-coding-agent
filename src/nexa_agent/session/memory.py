@@ -1,0 +1,64 @@
+"""把会话账本回放成可用的会话状态（SessionState）。
+
+回放就是把一条条 entry 按顺序"重演"一遍：
+- MessageEntry → 追加一条消息到 messages
+- ModelChangeEntry → 更新当前模型
+- LabelEntry → 更新当前标签
+
+因为账本是 append-only 的，回放后得到的就是"截至某条记录时"的最新状态。
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from nexa_agent.messages import AgentMessage
+from nexa_agent.session.entries import Entry, LabelEntry, MessageEntry, ModelChangeEntry
+from nexa_agent.session.tree import path_to_entry
+
+
+@dataclass
+class SessionState:
+    """回放后的会话状态。
+
+    Attributes:
+        messages: 当前对话历史（直接复用 AgentMessage，可喂回 AgentLoop）。
+        model: 当前使用的模型名。
+        label: 会话标签，未设置时为 None。
+    """
+
+    messages: list[AgentMessage] = field(default_factory=list)
+    model: str = ""
+    label: str | None = None
+
+    @classmethod
+    def from_entries(cls, entries: list[Entry], *, leaf_id: str | None = None) -> SessionState:
+        """从账本条目回放出会话状态。
+
+        Args:
+            entries: 账本里的全部条目。
+            leaf_id: 只回放"根到该叶子"路径上的条目；为 None 时回放全部。
+
+        Returns:
+            回放后的 SessionState。
+        """
+
+        # 指定叶子时，先取出根到叶子的路径，只回放路径上的条目。
+        if leaf_id is not None:
+            entries = path_to_entry(entries, leaf_id)
+
+        state = cls()
+        for entry in entries:
+            if isinstance(entry, MessageEntry):
+                # 消息条目直接取出内嵌的 AgentMessage，原样追加。
+                state.messages.append(entry.message)
+            elif isinstance(entry, ModelChangeEntry):
+                # 模型切换条目：账本只记新状态，回放时覆盖当前模型。
+                state.model = entry.model
+            elif isinstance(entry, LabelEntry):
+                # 标签条目：回放时覆盖当前标签。
+                state.label = entry.label
+        return state
+
+
+__all__ = ["SessionState"]
