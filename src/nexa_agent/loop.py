@@ -22,8 +22,8 @@ from nexa_agent.messages import (
     ToolCall,
     ToolResultMessage,
 )
+from nexa_agent.provider import ModelProvider
 from nexa_agent.tools import AgentTool, AgentToolResult
-from nexa_ai.provider import ModelProvider
 
 
 class AgentLoop:

@@ -17,8 +17,8 @@ from typing import Protocol
 from nexa_agent.events import AgentEndEvent, AgentEvent
 from nexa_agent.loop import AgentLoop
 from nexa_agent.messages import AgentMessage, UserMessage
+from nexa_agent.provider import ModelProvider
 from nexa_agent.tools import AgentTool
-from nexa_ai.provider import ModelProvider
 
 # ── 事件监听器协议 ────────────────────────────────────────────────────────────
 
@@ -263,97 +263,3 @@ class AgentHarness:
 
 
 __all__ = ["AgentHarness", "AgentHarnessConfig", "EventListener"]
-
-
-# ── 快速验证（用真实 API） ────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    """用真实 DeepSeek API 快速验证 Harness 的核心功能。
-
-    运行方式：uv run python src/nexa_agent/harness.py
-    """
-
-    import asyncio
-    import os
-
-    from nexa_agent.events import (
-        AgentEndEvent,
-        MessageEndEvent,
-        ToolExecutionEndEvent,
-        TurnEndEvent,
-    )
-    from nexa_ai.openai_compatible import OpenAICompatibleProvider
-
-    # 一个简单的监听器：打印关键事件
-    class PrintListener:
-        def on_event(self, event: object) -> None:
-            if isinstance(event, MessageEndEvent):
-                text = event.message.text
-                if text:
-                    print(f"  🤖 助手回复: {text[:80]}...")
-            elif isinstance(event, ToolExecutionEndEvent):
-                print(f"  🔧 工具结果: {event.result.text[:80]}")
-            elif isinstance(event, TurnEndEvent):
-                print("  🔄 轮次结束")
-
-    async def main() -> None:
-        # 创建 Provider
-        provider = OpenAICompatibleProvider(
-            name="deepseek",
-            api_key=os.environ["DEEPSEEK_API_KEY"],
-            base_url="https://api.deepseek.com",
-        )
-
-        # 创建 Harness
-        config = AgentHarnessConfig(
-            provider=provider,
-            model="deepseek-chat",
-            system="你是一个简洁的助手，回答控制在50字以内。",
-        )
-        harness = AgentHarness(config)
-
-        # 注册监听器
-        listener = PrintListener()
-        harness.subscribe(listener)
-
-        # ── 测试 1: prompt ───────────────────────────────────────────────
-        print("=" * 50)
-        print("测试 1: prompt()")
-        print("=" * 50)
-
-        async for event in harness.prompt("你好，请用一句话介绍自己。"):
-            if isinstance(event, AgentEndEvent):
-                print(f"  ✅ Agent 结束，历史 {len(event.messages)} 条消息")
-
-        print(f"\n  📜 历史消息: {len(harness.messages)} 条")
-        for i, msg in enumerate(harness.messages):
-            role = msg.role
-            text = msg.text[:50] if hasattr(msg, "text") else ""
-            print(f"    [{i}] {role}: {text}")
-
-        # ── 测试 2: continue ─────────────────────────────────────────────
-        print("\n" + "=" * 50)
-        print("测试 2: continue_()")
-        print("=" * 50)
-
-        async for event in harness.continue_():
-            if isinstance(event, AgentEndEvent):
-                print(f"  ✅ Agent 结束，历史 {len(event.messages)} 条消息")
-
-        print(f"\n  📜 历史消息: {len(harness.messages)} 条")
-
-        # ── 测试 3: 再次 prompt ──────────────────────────────────────────
-        print("\n" + "=" * 50)
-        print("测试 3: 再次 prompt()")
-        print("=" * 50)
-
-        async for event in harness.prompt("1+1等于几？"):
-            if isinstance(event, AgentEndEvent):
-                print(f"  ✅ Agent 结束，历史 {len(event.messages)} 条消息")
-
-        print(f"\n  📜 历史消息: {len(harness.messages)} 条")
-
-        print("\n" + "=" * 50)
-        print("✅ 所有测试完成")
-
-    asyncio.run(main())
