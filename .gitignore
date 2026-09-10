@@ -13,3 +13,10 @@ wheels/
 
 # Local API credentials
 .env
+
+# 本地笔记里可能含密钥，勿提交
+dev-notes/notes.md
+
+# 工具/系统产物
+.DS_Store
+.zcode/
