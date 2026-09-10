@@ -9,11 +9,12 @@ import sys
 from pathlib import Path
 from typing import TextIO
 
-from nexa_agent.events import AgentEndEvent, ToolExecutionEndEvent, ToolExecutionStartEvent
 from nexa_agent.harness import AgentHarness, AgentHarnessConfig
 from nexa_ai.openai_compatible import OpenAICompatibleProvider
 from nexa_ai.provider import ModelProvider
+from nexa_coding.rendering import PrintOutputMode, create_event_renderer
 from nexa_coding.tools import create_coding_tools
+from nexa_coding.tui import NexaTuiApp
 
 DEFAULT_MODEL = "deepseek-chat"
 DEFAULT_BASE_URL = "https://api.deepseek.com"
@@ -23,10 +24,29 @@ SYSTEM_PROMPT = "你是一个谨慎的 coding agent。需要时使用工具，�
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """解析这个一次性命令所需的最小参数。"""
     parser = argparse.ArgumentParser(description="运行一次 coding agent prompt")
-    parser.add_argument("-p", "--print", dest="prompt", required=True, help="要执行的 prompt")
+    parser.add_argument(
+        "-p",
+        "--print",
+        dest="prompt",
+        help="要执行的 prompt（print 模式必填；TUI 模式不需要）",
+    )
     parser.add_argument("--model", default=os.getenv("DEEPSEEK_MODEL", DEFAULT_MODEL))
+    parser.add_argument(
+        "--output",
+        type=PrintOutputMode,
+        default=PrintOutputMode.text,
+        choices=list(PrintOutputMode),
+        help="输出形态：text / json / transcript（默认 text）",
+    )
+    parser.add_argument("--tui", action="store_true", help="打开交互式 TUI 界面")
     parser.add_argument("--cwd", type=Path, default=Path.cwd(), help="工具可访问的项目目录")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    # print 模式（默认）必须有 -p；TUI 模式不需要。
+    if not args.tui and not args.prompt:
+        parser.error("print 模式需要 -p/--print 参数（或用 --tui 打开交互界面）")
+
+    return args
 
 
 def create_provider() -> OpenAICompatibleProvider:
@@ -64,31 +84,15 @@ async def run_prompt(
                 tools=create_coding_tools(cwd),
             )
         )
-        failed = False
-        final_answer = ""
+
+        # 渲染器把事件流变成输出；只观察，不改 agent 行为。
+        renderer = create_event_renderer(args.output, stdout=stdout, stderr=stderr)
 
         async for event in harness.prompt(args.prompt):
-            if isinstance(event, ToolExecutionStartEvent):
-                print(f"工具开始：{event.tool_name}", file=stderr)
-            elif isinstance(event, ToolExecutionEndEvent):
-                prefix = "工具失败" if event.is_error else "工具结束"
-                print(f"{prefix}：{event.tool_name}", file=stderr)
-                failed |= event.is_error
-            elif isinstance(event, AgentEndEvent):
-                for message in reversed(event.messages):
-                    if message.role == "assistant" and message.text:
-                        final_answer = message.text
-                        break
+            renderer.render(event)
 
-        # AgentLoop 会把 Provider 错误转换成此形式的最终助手消息。
-        if final_answer.startswith("错误: "):
-            print(final_answer, file=stderr)
-            return 1
-        if not final_answer:
-            print("错误：模型未返回最终回答", file=stderr)
-            return 1
-        print(final_answer, file=stdout)
-        return 1 if failed else 0
+        # finish() 返回是否成功，直接作为 CLI 退出码。
+        return 0 if renderer.finish() else 1
     except (OSError, ValueError) as error:
         print(f"错误：{error}", file=stderr)
         return 2
@@ -97,6 +101,15 @@ async def run_prompt(
 def main(argv: list[str] | None = None) -> None:
     """控制台脚本入口。"""
     args = parse_args(argv)
+    if args.tui:
+        try:
+            # Textual 自管事件循环，直接调用 App.run()，不要包 asyncio.run()。
+            NexaTuiApp(create_provider(), model=args.model).run()
+        except ValueError as error:
+            # 例如没配 API key：给出友好提示而不是堆栈。
+            print(f"错误：{error}", file=sys.stderr)
+            raise SystemExit(2) from None
+        return
     raise SystemExit(asyncio.run(run_prompt(args)))
 
 

@@ -11,10 +11,13 @@ from nexa_agent.messages import AssistantMessage, TextContent
 from nexa_ai.events import ProviderErrorEvent, ProviderResponseEndEvent
 from nexa_ai.fake import FakeProvider
 from nexa_coding.cli import run_prompt
+from nexa_coding.rendering import PrintOutputMode
 
 
 def _args(tmp_path) -> argparse.Namespace:
-    return argparse.Namespace(prompt="读取 README", model="test-model", cwd=tmp_path)
+    return argparse.Namespace(
+        prompt="读取 README", model="test-model", cwd=tmp_path, output=PrintOutputMode.text
+    )
 
 
 @pytest.mark.asyncio
