@@ -1,11 +1,12 @@
 """技能（skill）的加载、展开与索引。
 
 一个技能是一段可复用的指令文本（markdown），放在技能目录下：
-- <skills_dir>/<name>/SKILL.md
-- 或 <skills_dir>/<name>.md
+- <name>/SKILL.md
+- 或 <name>.md
 
-技能文件可用 frontmatter 声明 name / description；用户输入 /skill:name 参数
-时，把技能正文 + 参数拼成一段展开文本塞给模型。
+技能从多个来源发现（用户 ~/.nexa、~/.agents，项目 .nexa/.agents），
+项目级覆盖用户级。技能文件可用 frontmatter 声明 name / description；
+用户输入 /skill:name 参数 时，把技能正文 + 参数拼成一段展开文本塞给模型。
 """
 
 from __future__ import annotations
@@ -34,27 +35,48 @@ class Skill:
 
 
 def load_skills(paths: NexaResourcePaths) -> list[Skill]:
-    """扫描技能目录，加载全部技能。
+    """扫描全部技能目录，加载技能。
 
-    支持两种布局：
-    - <skills_dir>/<name>/SKILL.md
-    - <skills_dir>/<name>.md
+    支持两种布局（在每个目录内）：
+    - <name>/SKILL.md
+    - <name>.md
+
+    覆盖语义：skills_dirs 按优先级递增排列，跨目录同名技能由高优先级
+    （项目级）覆盖低优先级（用户级）；同一目录内重名仍是真冲突，抛错。
 
     Raises:
-        ResourceError: 两种布局出现同名技能时抛出。
+        ResourceError: 同一目录内出现同名技能时抛出。
     """
 
-    skills_dir = paths.skills_dir
-    if not skills_dir.is_dir():
-        return []
-
-    # 先收集目录布局和文件布局的技能名，检测重名。
     skills_by_name: dict[str, Skill] = {}
+
+    for skills_dir in paths.skills_dirs:
+        if not skills_dir.is_dir():
+            continue
+        # 逐目录注册：本目录内重名抛错，跨目录同名覆盖。
+        _register_skills_from_dir(skills_dir, skills_by_name)
+
+    # 返回时按名字排序，保证输出稳定。
+    return [skills_by_name[name] for name in sorted(skills_by_name)]
+
+
+def _register_skills_from_dir(skills_dir: Path, skills_by_name: dict[str, Skill]) -> None:
+    """扫描单个技能目录，把技能注册进 skills_by_name。
+
+    同目录内重名抛 ResourceError；跨目录同名由调用方覆盖语义处理
+    （高优先级目录后扫，直接覆盖低优先级的结果）。
+    """
+
+    # 本目录内已注册的名字（目录布局 + 文件布局可能撞名）。
+    local_names: set[str] = set()
 
     def _register(path: Path) -> None:
         name = _skill_name_from_path(path, skills_dir)
-        if name in skills_by_name:
+        if name in local_names:
+            # 同一目录内的重名：真冲突，不是覆盖。
             raise ResourceError(f"技能重名：{name!r} 出现在 {path}")
+        local_names.add(name)
+        # 跨目录同名：直接覆盖（本目录优先级更高）。
         skills_by_name[name] = _load_skill_file(name, path)
 
     # 目录布局：<name>/SKILL.md
@@ -68,9 +90,6 @@ def load_skills(paths: NexaResourcePaths) -> list[Skill]:
     for file in sorted(skills_dir.iterdir()):
         if file.is_file() and file.suffix == ".md" and file.stem != "SKILL":
             _register(file)
-
-    # 返回时按名字排序，保证输出稳定。
-    return [skills_by_name[name] for name in sorted(skills_by_name)]
 
 
 def expand_skill_command(text: str, skills: list[Skill]) -> str | None:

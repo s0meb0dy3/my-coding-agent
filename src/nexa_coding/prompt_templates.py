@@ -34,23 +34,31 @@ class PromptTemplate:
 
 
 def load_prompt_templates(paths: NexaResourcePaths) -> list[PromptTemplate]:
-    """扫描提示模板目录，加载全部模板（<prompts_dir>/<name>.md）。"""
+    """扫描全部提示模板目录，加载模板（<dir>/<name>.md）。
 
-    prompts_dir = paths.prompts_dir
-    if not prompts_dir.is_dir():
-        return []
+    prompts_dirs 按优先级递增排列，跨目录同名模板由高优先级（项目级）
+    覆盖低优先级（用户级）。
+    """
 
-    templates: list[PromptTemplate] = []
-    for file in sorted(prompts_dir.iterdir()):
-        if file.is_file() and file.suffix == ".md":
-            try:
-                text = file.read_text(encoding="utf-8")
-            except OSError as error:
-                raise ResourceError(f"无法读取提示模板 {file}: {error}") from error
-            # 模板也可以带 frontmatter，但这里只保留正文。
-            _, body = parse_markdown_resource(text)
-            templates.append(PromptTemplate(name=file.stem, path=file, template=body))
-    return templates
+    templates_by_name: dict[str, PromptTemplate] = {}
+
+    for prompts_dir in paths.prompts_dirs:
+        if not prompts_dir.is_dir():
+            continue
+        for file in sorted(prompts_dir.iterdir()):
+            if file.is_file() and file.suffix == ".md":
+                try:
+                    text = file.read_text(encoding="utf-8")
+                except OSError as error:
+                    raise ResourceError(f"无法读取提示模板 {file}: {error}") from error
+                # 模板也可以带 frontmatter，但这里只保留正文。
+                _, body = parse_markdown_resource(text)
+                # 高优先级目录后扫，直接覆盖低优先级的同名模板。
+                templates_by_name[file.stem] = PromptTemplate(
+                    name=file.stem, path=file, template=body
+                )
+
+    return [templates_by_name[name] for name in sorted(templates_by_name)]
 
 
 def render_prompt_template(template: PromptTemplate, variables: dict[str, str]) -> str:

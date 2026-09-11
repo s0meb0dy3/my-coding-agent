@@ -26,6 +26,7 @@ from nexa_agent.session.entries import (
 )
 from nexa_agent.session.memory import SessionState
 from nexa_agent.session.storage import JsonlStorage
+from nexa_coding.paths import NexaPaths
 from nexa_coding.resources import NexaResourcePaths
 from nexa_coding.skills import Skill, expand_skill_command, load_skills
 from nexa_coding.system_prompt import BuildSystemPromptOptions, build_system_prompt
@@ -59,22 +60,21 @@ class CodingSessionConfig:
         provider: 模型 Provider。
         model: 模型名。
         system: 系统提示词；为 None 时由 build_system_prompt 自动构建。
-        storage: 会话账本存储（JsonlStorage 或内存实现）。
-        cwd: 工具可访问的项目目录。
+        storage: 会话账本存储；为 None 时按项目自动落到
+            ~/.nexa/sessions/<项目>-<hash>/default.jsonl（见 NexaPaths）。
+        cwd: 工具可访问的项目目录，也决定会话落盘位置和项目资源发现。
         skills: 已加载的技能列表，prompt 里可触发 /skill:name。
-        resource_paths: 资源目录路径，用于加载技能。
+        resource_paths: 资源发现配置；为 None 时按 cwd 自动构造。
     """
 
     provider: ModelProvider
     model: str = DEFAULT_MODEL
     system: str | None = None
-    # 默认落盘到 ~/.nexa/sessions/default.jsonl；调用方可传内存存储或自定义路径。
-    storage: SessionStorage = field(
-        default_factory=lambda: JsonlStorage(Path.home() / ".nexa" / "sessions" / "default.jsonl")
-    )
+    # 为 None 时在 load() 里按 config.cwd 算项目隔离路径（default_factory 拿不到 cwd）。
+    storage: SessionStorage | None = None
     cwd: str | Path = Path.cwd()
     skills: list[Skill] = field(default_factory=list)
-    resource_paths: NexaResourcePaths = field(default_factory=NexaResourcePaths)
+    resource_paths: NexaResourcePaths | None = None
 
 
 # ── 会话主类 ─────────────────────────────────────────────────────────────────
@@ -129,20 +129,25 @@ class CodingSession:
         空会话则追加 SessionInfoEntry + ModelChangeEntry。
         """
         cwd = Path(config.cwd).resolve()
-        entries = config.storage.read_all()
+
+        # 存储：显式传入的优先；否则按项目隔离落到 ~/.nexa/sessions/<项目>-<hash>/。
+        storage = config.storage or JsonlStorage(NexaPaths().default_session_path(cwd))
+
+        entries = storage.read_all()
         state = SessionState.from_entries(entries)
 
         # 空会话：先落一条会话信息 + 一条模型记录。
         if not entries:
             session_info = SessionInfoEntry(id="info", parent_id=None, cwd=str(cwd))
             model_change = ModelChangeEntry(id="model", parent_id="info", model=config.model)
-            config.storage.append(session_info)
-            config.storage.append(model_change)
+            storage.append(session_info)
+            storage.append(model_change)
             entries = [session_info, model_change]
 
-        # 加载技能：config.skills 优先，否则从资源目录扫描。
+        # 加载技能：config.skills 优先，否则从资源目录扫描（用户 + 项目四级来源）。
         # 注意顺序：先加载技能，再拼系统提示词（技能要进 prompt）。
-        skills = config.skills or load_skills(config.resource_paths)
+        resource_paths = config.resource_paths or NexaResourcePaths(cwd=cwd)
+        skills = config.skills or load_skills(resource_paths)
 
         # 系统提示词：没给就用 build_system_prompt 自动构建。
         tools = create_coding_tools(cwd)
@@ -165,7 +170,7 @@ class CodingSession:
             provider=config.provider,
             model=config.model,
             system=system,
-            storage=config.storage,
+            storage=storage,
             cwd=cwd,
             harness=harness,
             entries=entries,
